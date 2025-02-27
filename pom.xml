@@ -1,0 +1,7 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>bg.swu.example.iot</groupId>
+  <artifactId>leshan-client</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+</project>
+
