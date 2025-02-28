@@ -2,10 +2,14 @@ package bg.swu.example.iot.leshan.client;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.leshan.client.LeshanClient;
+import org.eclipse.leshan.client.LeshanClientBuilder;
+import org.eclipse.leshan.client.endpoint.LwM2mClientEndpointsProvider;
 import org.eclipse.leshan.client.object.Device;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
@@ -17,12 +21,14 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.LwM2mModelRepository;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.transport.javacoap.client.endpoint.JavaCoapClientEndpointsProvider;
 
 public class ClientApp {
 	public static final String DEVICE_MANUFACTURER = "SWU";
 	public static final String DEVICE_MODEL_NUMBER = "test-model";
 	public static final String DEVICE_SERIAL_NUMBER = "123456";
 
+	public static final String ENDPOINT = "swu-client";
 	public static final int TEMPERATURE_SENSOR_ID = 3303;
 
 	public static void main(String[] args) {
@@ -55,6 +61,26 @@ public class ClientApp {
 		final List<LwM2mObjectEnabler> objectEnablers = createLwM2mObjectEnablers(
 			new LwM2mModelRepository(models).getLwM2mModel(), serverUri, shortServerId
 		);
+
+		final LeshanClientBuilder builder = new LeshanClientBuilder(ENDPOINT);
+		builder.setObjects(objectEnablers);
+		final List<LwM2mClientEndpointsProvider> endpointsProviders = new ArrayList<>();
+		endpointsProviders.add(new JavaCoapClientEndpointsProvider());
+		builder.setEndpointsProviders(endpointsProviders);
+        final LeshanClient client = builder.build();
+
+		client.start();
+		System.out.println("LwM2M Client started...");
+
+		final Runnable destroyOp = () -> {
+			System.out.println("Stopping LwM2M Client...");
+			// Deregister from the server before shutting down. We use destroy, because stop
+			// method simply stops the client but does not notify the LwM2M server.
+			client.destroy(true);
+		};
+
+		// Keep running
+		Runtime.getRuntime().addShutdownHook(new Thread(destroyOp));
 	}
 
 	private static List<LwM2mObjectEnabler> createLwM2mObjectEnablers(
