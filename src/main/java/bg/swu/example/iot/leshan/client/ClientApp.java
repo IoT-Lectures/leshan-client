@@ -21,6 +21,8 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.LwM2mModelRepository;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.transport.javacoap.client.coaptcp.endpoint.JavaCoapTcpClientEndpointsProvider;
+import org.eclipse.leshan.transport.javacoap.client.coaptcp.endpoint.JavaCoapsTcpClientEndpointsProvider;
 import org.eclipse.leshan.transport.javacoap.client.endpoint.JavaCoapClientEndpointsProvider;
 
 public class ClientApp {
@@ -33,6 +35,7 @@ public class ClientApp {
 
 	public static void main(String[] args) {
 		final String serverUri = "coap://localhost:5683";
+		final String serverTcpUri = "coap+tcp://localhost:5683";
 
 		// The shortServerId uniquely identifies the LwM2M server for which the security
 		// configuration applies. If your server uses 123 as the short server ID, use the same
@@ -58,6 +61,7 @@ public class ClientApp {
 			)
 		).collect(Collectors.toList());
 
+		// Use serverTcpUri if you want the connection to be made over TCP/IP.
 		final List<LwM2mObjectEnabler> objectEnablers = createLwM2mObjectEnablers(
 			new LwM2mModelRepository(models).getLwM2mModel(), serverUri, shortServerId
 		);
@@ -66,6 +70,8 @@ public class ClientApp {
 		builder.setObjects(objectEnablers);
 		final List<LwM2mClientEndpointsProvider> endpointsProviders = new ArrayList<>();
 		endpointsProviders.add(new JavaCoapClientEndpointsProvider());
+		endpointsProviders.add(new JavaCoapTcpClientEndpointsProvider());
+		endpointsProviders.add(new JavaCoapsTcpClientEndpointsProvider());
 		builder.setEndpointsProviders(endpointsProviders);
         final LeshanClient client = builder.build();
 
